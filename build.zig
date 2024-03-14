@@ -3,7 +3,7 @@ const std = @import("std");
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    const linkage = b.option(std.Build.Step.Compile.Linkage, "linkage", "whether to statically or dynamically link the library") orelse .static;
+    const linkage = b.option(std.builtin.LinkMode, "linkage", "whether to statically or dynamically link the library") orelse @as(std.builtin.LinkMode, if (target.result.isGnuLibC()) .dynamic else .static);
     const tools = b.option([]const []const u8, "tools", "The tools to build") orelse &[_][]const u8{
         "attr",
         "getfattr",
@@ -30,7 +30,7 @@ pub fn build(b: *std.Build) !void {
         .HAVE_SYS_TYPES_H = 1,
         .HAVE_UNISTD_H = 1,
         .HAVE_WCHAR_H = 1,
-        .SYSCONFDIR = "/etc",
+        .SYSCONFDIR = b.getInstallPath(.prefix, "etc"),
         .EXPORT = {},
         .VERSION = "2.5.2",
         ._POSIX_SOURCE = 1,
@@ -100,12 +100,13 @@ pub fn build(b: *std.Build) !void {
     libmisc.addConfigHeader(configHeader);
 
     libmisc.addCSourceFiles(.{
+        .root = source.path("libmisc"),
         .files = &.{
-            source.path("libmisc/high_water_alloc.c").getPath(b),
-            source.path("libmisc/next_line.c").getPath(b),
-            source.path("libmisc/quote.c").getPath(b),
-            source.path("libmisc/unquote.c").getPath(b),
-            source.path("libmisc/walk_tree.c").getPath(b),
+            "high_water_alloc.c",
+            "next_line.c",
+            "quote.c",
+            "unquote.c",
+            "walk_tree.c",
         },
     });
 
